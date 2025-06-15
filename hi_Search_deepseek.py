@@ -2,6 +2,8 @@ import os
 import logging
 import numpy as np
 import yaml
+import pypdf
+import docx
 from hirag import HiRAG, QueryParam
 from openai import AsyncOpenAI, OpenAI
 from dataclasses import dataclass
@@ -99,9 +101,53 @@ graph_func = HiRAG(
     embedding_func_max_async=config['hirag']['embedding_func_max_async'],
     enable_naive_rag=config['hirag']['enable_naive_rag'])
 
-# comment this if the working directory has already been indexed
-with open("your .txt file path") as f:
-    graph_func.insert(f.read())
+def _read_pdf_text(file_path: str) -> str:
+    """Extracts text from a PDF file."""
+    text = ""
+    with open(file_path, 'rb') as file:
+        reader = pypdf.PdfReader(file)
+        for page in reader.pages:
+            page_text = page.extract_text()
+            if page_text:
+                text += page_text + "\\n"
+    return text
 
-print("Perform hi search:")
+def _read_docx_text(file_path: str) -> str:
+    """Extracts text from a .docx file."""
+    doc = docx.Document(file_path)
+    full_text = [para.text for para in doc.paragraphs]
+    return '\\n'.join(full_text)
+
+def load_document(file_path: str) -> str:
+    """
+    Loads a document from a file, supporting .txt, .pdf, and .docx.
+    """
+    _, extension = os.path.splitext(file_path)
+    if extension.lower() == ".pdf":
+        return _read_pdf_text(file_path)
+    elif extension.lower() == ".docx":
+        return _read_docx_text(file_path)
+    elif extension.lower() == ".txt":
+        with open(file_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    else:
+        raise ValueError(f"Unsupported file type: {extension}")
+
+
+# comment this if the working directory has already been indexed
+# --- How to use ---
+# 1. Set the path to your document
+file_to_process = "your_document.pdf"  # Change to your .txt, .pdf, or .docx file
+
+# 2. Load the content and insert it into HiRAG
+try:
+    document_content = load_document(file_to_process)
+    graph_func.insert(document_content)
+    print(f"Successfully processed and indexed {file_to_process}")
+except (FileNotFoundError, ValueError) as e:
+    print(f"Error: {e}")
+    print("Please update the 'file_to_process' variable with the correct path to your document.")
+
+
+print("\\nPerform hi search:")
 print(graph_func.query("What are the top themes in this story?", param=QueryParam(mode="hi")))

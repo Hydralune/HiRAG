@@ -9,6 +9,8 @@ numpy==1.26.4
 openai==1.61.1
 pandas==2.2.3
 pydantic==2.10.6
+pypdf
+python-docx
 ragas==0.2.2
 scikit_learn==1.6.1
 seaborn==0.13.2

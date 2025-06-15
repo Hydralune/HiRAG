@@ -15,7 +15,7 @@ glm:
 # Deepseek Configuration
 deepseek:
   model: "deepseek-chat"
-  api_key: "***"
+  api_key: "sk-f55a9e773b6a4fc48dee18e38ba2b9af"
   base_url: "https://api.deepseek.com"
 
 # Model Parameters
